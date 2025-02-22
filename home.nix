@@ -19,6 +19,8 @@ in
     discord
     hyprcursor
     alacritty
+    brightnessctl
+    hypridle
   ];
   programs.bash.enable = true;
   programs.hyprlock.enable = true;
@@ -52,7 +54,7 @@ in
       }
       {
         monitor = "";
-        text = "Welcome Back";
+        text = "Welcome";
         color = "$text";
         position = "0, 50";
         halign = "center";
@@ -66,7 +68,8 @@ in
 
   wayland.windowManager.hyprland = {
     enable = true;
-    settings = {     
+    settings = {
+      exec-once = "hypridle";
       "$mod" = "SUPER";
       bind = [
         "$mod, F, exec, firefox"
@@ -92,6 +95,32 @@ in
       gestures.workspace_swipe = true;
       gestures.workspace_swipe_create_new = false;
       
+    };
+  };
+
+  services.hypridle = {
+    enable = true;
+    settings = {
+      general = {
+        lock_cmd = "pidof hyprlock || hyprlock";
+        before_sleep_cmd = "loginctl lock-session";
+        after_sleep_cmd = "hyprctl dispatch dpms on";
+      };
+      listener = [
+        {
+          timeout = 300;
+          on-timeout = "loginctl lock-session";
+        }
+        {
+          timeout = 360;
+          on-timeout = "hyprctl dispatch dpms off";
+          on-resume = "hyprctl dispatch dpms on";
+        }
+        {
+          timeout = 600;
+          on-timeout = "systemctl suspend";
+        }
+      ];
     };
   };
 
