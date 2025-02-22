@@ -71,13 +71,15 @@ in
     settings = {
       exec-once = "hypridle";
       "$mod" = "SUPER";
+
       bind = [
+        # Program Keybinds Here
         "$mod, F, exec, firefox"
         "$mod, E, exec, alacritty"
         "$mod, L, exec, hyprlock"
       ]
       ++ (
-        # workspaces
+        # Workspace Keybinds
         # binds $mod + [shift +] {1..9} to [move to] workspace {1..9}
         builtins.concatLists (builtins.genList (i:
             let ws = i + 1;
@@ -87,7 +89,16 @@ in
             ]
           )
           9)
-      );
+      )
+      ++ [
+        # "System Keybinds"
+        ", XF86MonBrightnessDown, exec, brightnessctl s 5%-"
+        ", XF86MonBrightnessUp, exec, brightnessctl s 5%+"
+        ", XF86ScreenSaver, exec, hyprctl dispatch dpms toggle"
+        ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+        ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
+        ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+      ];
       binds.workspace_back_and_forth = true;
       monitor = ", preferred, auto, 1";
       general.resize_on_border = true;
