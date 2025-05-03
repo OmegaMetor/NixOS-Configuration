@@ -2,13 +2,12 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      <home-manager/nixos>
     ];
 
   # Bootloader.
@@ -24,11 +23,11 @@
     "quiet"
     "splash"
     "boot.shell_on_fail"
-    "loglevel=3"
     "rd.systemd.show_status=false"
     "rd.udev.log_level=3"
     "udev.log_priority=3"
   ];
+  boot.consoleLogLevel = 1;
   boot.plymouth = {
     enable = true;
     theme = "catppuccin-mocha";
@@ -38,11 +37,10 @@
       })
     ];
   };
-
-#  fileSystems."/mnt/c" = {
-#    device = "/dev/nvme1n1p3";
-#    options = [ "ro" ];
-#  };
+  fileSystems."/mnt/c" = {
+    device = "/dev/nvme1n1p3";
+    options = [ "ro" ];
+  };
   
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -104,7 +102,8 @@
     };
   };
   services.dbus.enable = true;
-
+  services.udisks2.enable = true;
+  
   fonts.packages = with pkgs; [
     noto-fonts
     noto-fonts-cjk-sans
@@ -115,27 +114,53 @@
     mplus-outline-fonts.githubRelease
     dina-font
     proggyfonts
-    nerdfonts
     jetbrains-mono
-  ];
+  ] ++ builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
 
+  programs.steam.enable = true;
+  programs.steam.remotePlay.openFirewall = true;
+  programs.ssh.startAgent = true;
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.mattie = {
     isNormalUser = true;
     description = "Mattie Nash";
-    extraGroups = [ "networkmanager" "wheel" "audio" ];
+    extraGroups = [ "networkmanager" "wheel" "audio" "input" ];
     packages = with pkgs; [];
   };
 
   hardware.graphics = {
     enable = true;
   };
-  
-  home-manager.users.mattie = import ./home.nix;
+
+  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.stable;
+  services.xserver.videoDrivers = ["nvidia"];
+
+  hardware.nvidia = {
+    modesetting.enable = true;
+
+    powerManagement.enable = false;
+    powerManagement.finegrained = false;
+    open = false;
+    nvidiaSettings = true;
+  };
+
+  hardware.nvidia.prime = {
+    # Make sure to use the correct Bus ID values for your system!
+    intelBusId = "PCI:0:2:0";
+    nvidiaBusId = "PCI:1:0:0";
+    # amdgpuBusId = "PCI:54:0:0"; For AMD GPU
+
+    offload = {
+      enable = true;
+      enableOffloadCmd = true;
+    };
+  };
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.registry.nixpkgs.flake = inputs.nixpkgs;
+  nix.registry.nixpkgs-stable.flake = inputs.nixpkgs-stable;
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   
@@ -156,6 +181,7 @@
   services.displayManager.sddm.theme = "catppuccin-mocha";
   services.displayManager.sddm.wayland.enable = true;
   services.displayManager.sddm.package = pkgs.kdePackages.sddm;
+  services.tailscale.enable = true;
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;

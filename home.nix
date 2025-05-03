@@ -3,9 +3,6 @@ let
   discord = pkgs.discord.override { withVencord = true; };
 in
 {
-  imports = [
-    <catppuccin/modules/home-manager>
-  ];
   home.username = "mattie";
   home.homeDirectory = "/home/mattie";
 
@@ -21,10 +18,27 @@ in
     alacritty
     brightnessctl
     hypridle
+    obsidian
+    grim
+    slurp
+    prismlauncher
+    tailscale
+    libinput-gestures
   ];
+  programs.vscode = {
+    enable = true;
+  };
+  programs.direnv = {
+    enable = true;
+    enableBashIntegration = true;
+    nix-direnv.enable = true;
+    config = {
+      global.hide_env_diff = true;
+    };
+  };
   programs.bash.enable = true;
   programs.hyprlock.enable = true;
-  programs.hyprlock.settings = {
+  /*programs.hyprlock.settings = {
     background = {
       path = "screenshot";
       blur_passes = 3;
@@ -61,25 +75,40 @@ in
         valign = "center";
       }
     ];
+  };*/
+
+  gtk.iconTheme = {
+    name = "Papirus-Dark";
+    package = pkgs.catppuccin-papirus-folders.override {
+      flavor = "macchiato";
+      accent = "blue";
+    };
   };
 
   catppuccin.enable = true;
   catppuccin.cursors.enable = true;
-
+  home.pointerCursor.gtk.enable = true;
+  home.pointerCursor.size = 24;
   wayland.windowManager.hyprland = {
     enable = true;
+    systemd.enable = false;
     settings = {
-      exec-once = "hypridle";
+      exec-once = [
+        "hypridle"
+        "hyprctl setcursor 24"
+        "discord"
+        "libinput-gestures"
+      ];
       "$mod" = "SUPER";
 
       bind = [
         # Program Keybinds Here
-        "$mod, F, exec, firefox"
+        "$mod, F, exec, nvidia-offload firefox"
         "$mod, E, exec, alacritty"
         "$mod, L, exec, hyprlock"
       ]
       ++ (
-        # Workspace Keybinds
+        # Numbered Workspace Keybinds
         # binds $mod + [shift +] {1..9} to [move to] workspace {1..9}
         builtins.concatLists (builtins.genList (i:
             let ws = i + 1;
@@ -91,6 +120,12 @@ in
           9)
       )
       ++ [
+        # Other Workspace Keybinds
+        "$mod, D, workspace, name:Discord"
+        "$mod, Left, workspace, m-1"
+        "$mod, Right, workspace, m+1"
+      ]
+      ++ [
         # "System Keybinds"
         ", XF86MonBrightnessDown, exec, brightnessctl s 5%-"
         ", XF86MonBrightnessUp, exec, brightnessctl s 5%+"
@@ -98,16 +133,32 @@ in
         ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
         ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
         ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+        "$mod, c, killactive"
+        "$mod SHIFT, S, exec, grim -g \"$(slurp)\" - | wl-copy "
       ];
+      bindm = "$mod, mouse:272, movewindow";
       binds.workspace_back_and_forth = true;
+      bindr = "SUPER, SPACE, global, :ToggleLauncher";
       monitor = ", preferred, auto, 1";
       general.resize_on_border = true;
-      input.touchpad.scroll_factor = .2;
-      gestures.workspace_swipe = true;
+      input.touchpad.scroll_factor = .4;
+      input.touchpad.disable_while_typing = false;
+      gestures.workspace_swipe = false;
       gestures.workspace_swipe_create_new = false;
-      
+      misc = {
+        focus_on_activate = true;
+        middle_click_paste = false;
+      };
+      windowrule = "workspace name:Discord silent, class:discord";
     };
   };
+
+  # Libinput-gestures config
+
+  home.file.".config/libinput-gestures.conf".text = ''
+    gesture swipe left 3 hyprctl dispatch workspace m+1
+    gesture swipe right 3 hyprctl dispatch workspace m-1
+  '';
 
   services.hypridle = {
     enable = true;
@@ -137,6 +188,8 @@ in
 
   home.sessionVariables.NIXOS_OZONE_WL = "1";
 
+  services.udiskie.enable = true;
+
   programs.alacritty = {
     enable = true;
     settings = {
@@ -160,11 +213,7 @@ in
     };
   };
 
-  programs.direnv = {
-    enable = true;
-    enableBashIntegration = true;
-    nix-direnv.enable = true;
-  };
+  gtk.enable = true;
 
   services.mpris-proxy.enable = true;
 
