@@ -12,13 +12,16 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     catppuccin.url = "github:catppuccin/nix";
     catppuccin.inputs.nixpkgs.follows = "nixpkgs";
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, home-manager, catppuccin, lix-module, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, catppuccin, lix-module, sops-nix, ... }@inputs: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
         ./configuration.nix
+        sops-nix.nixosModules.sops
         catppuccin.nixosModules.catppuccin
         lix-module.nixosModules.default
 

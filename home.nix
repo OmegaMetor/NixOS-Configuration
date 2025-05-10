@@ -24,10 +24,14 @@ in
     prismlauncher
     tailscale
     libinput-gestures
+    nixd
+    ssh-to-age
+    sops
   ];
   programs.vscode = {
     enable = true;
   };
+  
   programs.direnv = {
     enable = true;
     enableBashIntegration = true;
@@ -105,7 +109,7 @@ in
         # Program Keybinds Here
         "$mod, F, exec, nvidia-offload firefox"
         "$mod, E, exec, alacritty"
-        "$mod, L, exec, hyprlock"
+        "$mod, L, exec, (pidof my-shell && pkill -USR1 my-shell) || hyprlock"
       ]
       ++ (
         # Numbered Workspace Keybinds
@@ -149,7 +153,11 @@ in
         focus_on_activate = true;
         middle_click_paste = false;
       };
-      windowrule = "workspace name:Discord silent, class:discord";
+      windowrule = ["workspace name:Discord silent, class:discord"];
+      layerrule = [
+        "dimaround, my-shell-launcher"
+        "blur, my-shell-launcher"
+      ];
     };
   };
 
@@ -164,7 +172,7 @@ in
     enable = true;
     settings = {
       general = {
-        lock_cmd = "pidof hyprlock || hyprlock";
+        lock_cmd = "(pidof my-shell && pkill -USR1 my-shell) || (pidof hyprlock || hyprlock)";
         before_sleep_cmd = "loginctl lock-session";
         after_sleep_cmd = "hyprctl dispatch dpms on";
       };

@@ -37,10 +37,6 @@
       })
     ];
   };
-  fileSystems."/mnt/c" = {
-    device = "/dev/nvme1n1p3";
-    options = [ "ro" ];
-  };
   
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -125,7 +121,13 @@
     isNormalUser = true;
     description = "Mattie Nash";
     extraGroups = [ "networkmanager" "wheel" "audio" "input" ];
-    packages = with pkgs; [];
+    openssh.authorizedKeys.keys = ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFYR8GEMcE6a92QRCltZIIFuZLpXL1bkpbJLgQA4mckh mattie@nixos"];
+  };
+
+  sops = {
+    age.sshKeyPaths = ["/home/mattie/.ssh/id_ed25519"];
+    defaultSopsFile = ./secrets/secrets.yaml;
+    secrets.example_key = {};
   };
 
   hardware.graphics = {
